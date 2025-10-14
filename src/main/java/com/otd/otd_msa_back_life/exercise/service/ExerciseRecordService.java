@@ -85,34 +85,50 @@ public class ExerciseRecordService {
         Long recordId = exerciseRecordRepository.save(exerciseRecord).getExerciseRecordId();
 
         LocalDate recordDate = req.getStartAt().toLocalDate();
-        ResponseEntity<List<String>> response = challengeFeignClient.getActiveChallengeNames(userId, recordDate);
-        List<String> activeChallenges = response.getBody();
-        if (activeChallenges != null && !activeChallenges.isEmpty()) {
-            ExerciseCountAndSum summary = exerciseRecordRepository.getDailyExerciseSummary(
-                    userId,
-                    req.getStartAt().toLocalDate().atStartOfDay(),
-                    req.getStartAt().toLocalDate().plusDays(1).atStartOfDay()
-            );
-            for (String ch : activeChallenges) {
-                String mappedChallengeName = challengeName(exercise.getExerciseName());
-                if (ch.equals(mappedChallengeName)) {
-                    ExerciseDataReq feign = ExerciseDataReq.builder()
-                            .userId(userId)
-                            .recordId(recordId)
-                            .name(ch)
-                            .record(exercise.getHasDistance() ? req.getDistance() : req.getReps().doubleValue())
-                            .recordDate(req.getStartAt().toLocalDate())
-                            .count(summary.getCount())
-                            .totalKcal(summary.getTotalKcal())
-                            .today(LocalDate.now())
-                            .build();
-                    log.info("feign{}", feign);
-                    ResponseEntity<Integer> response2 = challengeFeignClient.updateProgressByExercise(feign);
-                    Integer feignResult = response2.getBody();
+        try {
+            ResponseEntity<List<String>> response = challengeFeignClient.getActiveChallengeNames(userId, recordDate);
+            List<String> activeChallenges = response.getBody();
+
+            if (activeChallenges != null && !activeChallenges.isEmpty()) {
+                ExerciseCountAndSum summary = exerciseRecordRepository.getDailyExerciseSummary(
+                        userId,
+                        req.getStartAt().toLocalDate().atStartOfDay(),
+                        req.getStartAt().toLocalDate().plusDays(1).atStartOfDay()
+                );
+
+                for (String ch : activeChallenges) {
+                    String mappedChallengeName = challengeName(exercise.getExerciseName());
+
+                    if (ch.equals(mappedChallengeName)) {
+                        ExerciseDataReq feign = ExerciseDataReq.builder()
+                                .userId(userId)
+                                .recordId(recordId)
+                                .name(ch)
+                                .record(exercise.getHasDistance()
+                                        ? req.getDistance()
+                                        : req.getReps() != null ? req.getReps().doubleValue() : 0.0)
+                                .recordDate(req.getStartAt().toLocalDate())
+                                .count(summary.getCount())
+                                .totalKcal(summary.getTotalKcal())
+                                .today(LocalDate.now())
+                                .build();
+                        log.info("feign {}", feign);
+
+                        try {
+                            ResponseEntity<Integer> response2 = challengeFeignClient.updateProgressByExercise(feign);
+                            Integer feignResult = response2.getBody();
+                            log.info("result={}", feignResult);
+                        } catch (Exception e) {
+                            log.error("챌린지 진행도 업데이트 실패 userId={}, recordId={}, error={}",
+                                    userId, recordId, e.getMessage(), e);
+                        }
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.error("활성 챌린지 조회 실패 userId={}, recordDate={}, error={}",
+                    userId, recordDate, e.getMessage(), e);
         }
-
 
         return recordId;
     }

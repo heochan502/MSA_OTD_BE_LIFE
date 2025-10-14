@@ -234,7 +234,7 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("게시글 삭제 됨"));
         List<AdminCommunityDataDto.CommentDto> comments =
                 mentRepository.findByPostPostId(postId).stream()
-                        .map(c -> new AdminCommunityDataDto.CommentDto(c.getCommentId(), c.getContent()))
+                        .map(c -> new AdminCommunityDataDto.CommentDto(c.getCommentId(), c.getContent(),c.getNickName(), c.getCreatedAt()))
                         .toList();
 
         List<AdminCommunityDataDto.FileDto> files =
@@ -243,11 +243,13 @@ public class AdminService {
                         .toList();
 
         return AdminCommunityDataDto.builder()
+                .nickName(post.getNickName())
                 .title(post.getTitle())
                 .category(post.getCategory().getName())
                 .content(post.getContent())
                 .likeCount(post.getLikeCount())
                 .isDeleted(post.getIsDeleted())
+                .createdAt(post.getCreatedAt())
                 .comments(comments)
                 .files(files)
                 .build();

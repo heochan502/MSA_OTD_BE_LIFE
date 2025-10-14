@@ -2,6 +2,7 @@ package com.otd.otd_msa_back_life.admin.model;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -16,6 +17,7 @@ public class AdminCommunityDataDto {
     private String content;
     private int likeCount;
     private boolean isDeleted;
+    private LocalDateTime createdAt;
 
     private List<CommentDto> comments;
     private List<FileDto> files;
@@ -28,6 +30,8 @@ public class AdminCommunityDataDto {
     public static class CommentDto {
         private Long id;
         private String content;
+        private String nickName;
+        private LocalDateTime createdAt;
     }
 
     @Getter
