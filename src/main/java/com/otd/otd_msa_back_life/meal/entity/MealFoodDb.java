@@ -11,7 +11,8 @@ import lombok.*;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+
+@ToString
 public class MealFoodDb {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

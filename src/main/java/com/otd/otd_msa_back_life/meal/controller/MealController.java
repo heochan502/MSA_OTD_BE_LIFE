@@ -53,12 +53,12 @@ public class MealController {
     }
 
     @GetMapping
-    public ResponseEntity<?> inputMealRecord(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestParam LocalDate mealDay) {
+    public ResponseEntity<?> getMealRecord(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestParam LocalDate mealDay) {
         log.info("유저 아이디: {}", userPrincipal.getSignedUserId());
         log.info("선택 날 : {}", mealDay);
 
         List<MealRecord> result = mealService.mealMainListRes(userPrincipal.getSignedUserId(), mealDay);
-
+        log.info("데이터  : {}", result.toString());
         return ResponseEntity.ok(result);
     }
 
