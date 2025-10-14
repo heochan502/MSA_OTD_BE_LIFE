@@ -132,29 +132,7 @@ public class MealService {
                                 .userFood(null)
                                 .build()
                 );
-                Double sumProtein = mealRecordDetailRepository.findTotalProteinByUserAndDay(userId, mealRecordReq.getMealDay());
 
-                if (sumProtein >= 100) {
-                    String challengeName = "단백질 섭취";
-                    ResponseEntity<List<String>> myChallenges = challengeFeignClient
-                            .getActiveChallengeNames(userId, mealRecordReq.getMealDay());
-                    List<String> activeChallenges = myChallenges.getBody();
-                    if (activeChallenges != null && !activeChallenges.isEmpty()) {
-                        for (String activeChallenge : activeChallenges) {
-                            if (activeChallenge.equals(challengeName)) {
-                                MealDataReq feign = MealDataReq.builder()
-                                        .userId(userId)
-                                        .recDate(mealRecordReq.getMealDay())
-                                        .today(LocalDate.now())
-                                        .value(sumProtein)
-                                        .name(challengeName)
-                                        .build();
-                                ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
-                                Integer feignResult = response.getBody();
-                            }
-                        }
-                    }
-                }
                 return new MealSaveResultDto(1, List.of(saved.getMealId()),newUserFoodIds );
             }
             else if (food.getFoodDbId() != null && food.getFoodDbId() == 0) {
@@ -221,6 +199,32 @@ public class MealService {
 
             MealRecord saved = mealRecordRepository.save(mealRecord);
             recordIds.add(saved.getMealId());
+
+            Double sumProteinObj = mealRecordDetailRepository.findTotalProteinByUserAndDay(userId, mealRecordReq.getMealDay());
+            double sumProtein = sumProteinObj == null ? 0.0 : sumProteinObj;
+            log.info("[meal] user={}, day={}, sumProtein={}", userId, mealRecordReq.getMealDay(), sumProtein);
+
+            if (sumProtein >= 100) {
+                String challengeName = "단백질 섭취";
+                ResponseEntity<List<String>> myChallenges = challengeFeignClient
+                        .getActiveChallengeNames(userId, mealRecordReq.getMealDay());
+                List<String> activeChallenges = myChallenges.getBody();
+                if (activeChallenges != null && !activeChallenges.isEmpty()) {
+                    for (String activeChallenge : activeChallenges) {
+                        if (activeChallenge.equals(challengeName)) {
+                            MealDataReq feign = MealDataReq.builder()
+                                    .userId(userId)
+                                    .recDate(mealRecordReq.getMealDay())
+                                    .today(LocalDate.now())
+                                    .value(sumProtein)
+                                    .name(challengeName)
+                                    .build();
+                            ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
+                            Integer feignResult = response.getBody();
+                        }
+                    }
+                }
+            }
         }
 
         MealRecordDetail mealRecordDetail= MealRecordDetail.builder()
