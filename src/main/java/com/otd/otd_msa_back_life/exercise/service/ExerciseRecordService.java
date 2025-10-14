@@ -100,13 +100,20 @@ public class ExerciseRecordService {
                     String mappedChallengeName = challengeName(exercise.getExerciseName());
 
                     if (ch.equals(mappedChallengeName)) {
+                        Double recordValue;
+                        if (exercise.getHasDistance()) {
+                            recordValue = req.getDistance();
+                        } else if (exercise.getHasReps()) {
+                            recordValue = req.getReps() != null ? req.getReps().doubleValue() : 0.0;
+                        } else {
+                            // 거리/반복 둘 다 아니면 시간 기반 → duration 사용
+                            recordValue = req.getDuration() != null ? req.getDuration().doubleValue() : 0.0;
+                        }
                         ExerciseDataReq feign = ExerciseDataReq.builder()
                                 .userId(userId)
                                 .recordId(recordId)
                                 .name(ch)
-                                .record(exercise.getHasDistance()
-                                        ? req.getDistance()
-                                        : req.getReps() != null ? req.getReps().doubleValue() : 0.0)
+                                .record(recordValue)
                                 .recordDate(req.getStartAt().toLocalDate())
                                 .count(summary.getCount())
                                 .totalKcal(summary.getTotalKcal())
