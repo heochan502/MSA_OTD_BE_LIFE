@@ -6,6 +6,9 @@ constants:
       name: otd-user
       url: http://otd-user:8080
 
+
+file:
+  upload-directory: /home/download
 server:
   port: 8080
 

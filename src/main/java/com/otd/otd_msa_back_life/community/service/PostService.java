@@ -127,11 +127,13 @@ public class PostService {
      * 게시글 소프트 삭제
      */
     @Transactional
-    public void deleteSoft(Long postId, Long requesterId) {
+    public void deleteSoft(Long postId, Long requesterId, String role) {
         CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 없음: " + postId));
 
-        if (!post.getUserId().equals(requesterId)) {
+        boolean isOwner = post.getUserId().equals(requesterId);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        if (!(isOwner || isAdmin)) {
             throw new IllegalStateException("삭제 권한 없음");
         }
 

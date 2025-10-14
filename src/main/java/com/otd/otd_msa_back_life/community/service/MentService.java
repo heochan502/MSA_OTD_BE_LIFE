@@ -111,12 +111,16 @@ public class MentService {
     }
 
     @Transactional
-    public void delete(Long mentId, Long requesterId) {
+    public void delete(Long mentId, Long requesterId, String role) {
         Ment ment = mentRepository.findById(mentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글 없음: " + mentId));
-        if (!ment.getUserId().equals(requesterId)) {
+        boolean isOwner = ment.getUserId().equals(requesterId);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+
+        if (!(isOwner || isAdmin)) {
             throw new IllegalStateException("삭제 권한 없음");
         }
+
         mentRepository.delete(ment);
     }
 }

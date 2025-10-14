@@ -35,8 +35,9 @@ public class MentController {
     // 댓글 삭제: 본인만 가능
     @DeleteMapping("/ments/{mentId}")
     public ResponseEntity<Void> delete(@PathVariable Long mentId,
-                                       @RequestHeader("X-MEMBER-ID") Long requesterId) {
-        mentService.delete(mentId, requesterId);
+                                       @RequestHeader("X-MEMBER-ID") Long requesterId,
+                                       @RequestHeader(value = "X-ROLE", required = false) String role) {
+        mentService.delete(mentId, requesterId, role);
         return ResponseEntity.noContent().build();
     }
 }

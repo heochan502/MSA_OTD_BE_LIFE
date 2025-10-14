@@ -73,10 +73,10 @@ public class PostController {
     @DeleteMapping("/posts/{postId}")
     public void delete(
             @PathVariable Long postId,
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestHeader(value = "X-ROLE", required = false) String role) {
         Long requesterId = userPrincipal.getSignedUserId();
-        postService.deleteSoft(postId, requesterId);
+        postService.deleteSoft(postId, requesterId, role);
     }
 
     @PutMapping("/posts/modify/nickname")
