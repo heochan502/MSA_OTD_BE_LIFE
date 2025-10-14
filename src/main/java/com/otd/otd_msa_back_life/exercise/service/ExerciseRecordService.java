@@ -48,7 +48,7 @@ public class ExerciseRecordService {
         };
     }
     //    [post] exerciseRecord
-    @Transactional
+
     public Long saveExerciseRecord(Long userId, ExerciseRecordPostReq req) {
 //        exercise 존재 여부 확인
         ExerciseCatalog exercise = exerciseCatalogRepository.findById(req.getExerciseId())
@@ -118,7 +118,7 @@ public class ExerciseRecordService {
     }
 
     //    [GET] recordList -> page
-    @Transactional
+
     public List<ExerciseRecordGetRes> getExerciseRecordList(Long userId, PagingReq req) {
         PagingDto dto = PagingDto.builder()
                 .type(req.getType())
@@ -131,13 +131,13 @@ public class ExerciseRecordService {
     }
 
     //    [GET] weeklyRecord
-    @Transactional
+
     public List<ExerciseRecord> getExerciseRecordWeekly(Long userId, ExerciseRecordWeeklyGetReq req) {
         return exerciseRecordRepository.findByUserIdAndStartAtBetween(userId, req.getStartOfWeek(), req.getEndOfWeek());
     }
 
 //    [GET] detail
-    @Transactional
+
     public ExerciseRecordDetailGetRes getExerciseRecordDetail(Long userId, Long exerciseRecordId) {
 
         ExerciseRecord exerciseRecord = exerciseRecordRepository
@@ -169,7 +169,6 @@ public class ExerciseRecordService {
 
 
     //    [DELETE]
-    @Transactional
     public void deleteExerciseRecord(Long userId, Long exerciseRecordId) {
         ExerciseRecord record = exerciseRecordRepository.findById(exerciseRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("운동 기록을 찾을 수 없습니다."));
