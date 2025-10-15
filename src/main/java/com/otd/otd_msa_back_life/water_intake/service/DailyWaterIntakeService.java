@@ -69,35 +69,40 @@ public class DailyWaterIntakeService {
     private void checkAndUpdateChallenge(Long userId, LocalDate intakeDate, double amountLiter) {
         if (amountLiter < 2.0) return;
 
-        ResponseEntity<List<String>> myChallenges = challengeFeignClient
-                .getActiveChallengeNames(userId, intakeDate);
-        List<String> activeChallenges = myChallenges.getBody();
+        try {
+            // 활성 챌린지 목록 조회
+            ResponseEntity<List<String>> myChallenges =
+                    challengeFeignClient.getActiveChallengeNames(userId, intakeDate);
+            List<String> activeChallenges = myChallenges.getBody();
 
-        if (activeChallenges != null && !activeChallenges.isEmpty()) {
-            // 조건: "물마시기" 챌린지를 하고 있을 때만 진행 업데이트
-            if (activeChallenges.contains(CHALLENGE_NAME)) {
-                MealDataReq feign = MealDataReq.builder()
-                        .userId(userId)
-                        .name(CHALLENGE_NAME)
-                        .today(LocalDate.now())
-                        .value(amountLiter)
-                        .recDate(intakeDate)
-                        .build();
+            if (activeChallenges != null && !activeChallenges.isEmpty()) {
+                // 조건: "물마시기" 챌린지를 하고 있을 때만 진행 업데이트
+                if (activeChallenges.contains(CHALLENGE_NAME)) {
+                    MealDataReq feign = MealDataReq.builder()
+                            .userId(userId)
+                            .name(CHALLENGE_NAME)
+                            .today(LocalDate.now())
+                            .value(amountLiter)
+                            .recDate(intakeDate)
+                            .build();
 
-                try {
-                    ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
-                    log.debug("챌린지 업데이트 결과: {}", response.getStatusCode());
+                    try {
+                        ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
+                        log.debug("챌린지 업데이트 결과: {}", response.getStatusCode());
 
-                    if (response.getStatusCode().is2xxSuccessful()) {
-                        log.info("물마시기 챌린지 진행 상황이 정상적으로 업데이트되었습니다.");
-                    } else {
-                        log.warn("물마시기 챌린지 업데이트 실패: status={}", response.getStatusCode());
+                        if (response.getStatusCode().is2xxSuccessful()) {
+                            log.info("물마시기 챌린지 진행 상황이 정상적으로 업데이트되었습니다.");
+                        } else {
+                            log.warn("물마시기 챌린지 업데이트 실패: status={}", response.getStatusCode());
+                        }
+                    } catch (Exception e) {
+                        log.error("물마시기 챌린지 진행 업데이트 중 예외 발생: {}", e.getMessage(), e);
                     }
-                } catch (Exception e) {
-                    // FeignException, HttpClientErrorException, ResourceAccessException 등 처리 가능
-                    log.error("물마시기 챌린지 진행 업데이트 중 예외 발생: {}", e.getMessage(), e);
                 }
             }
+        } catch (Exception e) {
+            log.error("활성 챌린지 조회 중 예외 발생: userId={}, intakeDate={}, error={}",
+                    userId, intakeDate, e.getMessage(), e);
         }
     }
 }
