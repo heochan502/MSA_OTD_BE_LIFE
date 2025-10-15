@@ -84,8 +84,19 @@ public class DailyWaterIntakeService {
                         .recDate(intakeDate)
                         .build();
 
-                ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
-                log.debug("챌린지 업데이트 결과: {}", response.getStatusCode());
+                try {
+                    ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
+                    log.debug("챌린지 업데이트 결과: {}", response.getStatusCode());
+
+                    if (response.getStatusCode().is2xxSuccessful()) {
+                        log.info("물마시기 챌린지 진행 상황이 정상적으로 업데이트되었습니다.");
+                    } else {
+                        log.warn("물마시기 챌린지 업데이트 실패: status={}", response.getStatusCode());
+                    }
+                } catch (Exception e) {
+                    // FeignException, HttpClientErrorException, ResourceAccessException 등 처리 가능
+                    log.error("물마시기 챌린지 진행 업데이트 중 예외 발생: {}", e.getMessage(), e);
+                }
             }
         }
     }

@@ -210,15 +210,38 @@ public class ExerciseRecordService {
                 .today(LocalDate.now())
                 .build();
         exerciseRecordRepository.delete(record);
-        ExerciseCountAndSum summary = exerciseRecordRepository.getDailyExerciseSummary(
-                userId,
-                record.getStartAt().toLocalDate().atStartOfDay(),
-                record.getStartAt().toLocalDate().plusDays(1).atStartOfDay()
-        );
-        req.setCount(summary.getCount());
-        req.setTotalKcal(summary.getTotalKcal());
-        ResponseEntity<Integer> response = challengeFeignClient.deleteRecordByExercise(req);
-        Integer feignResult = response.getBody();
+        try {
+            // 하루 요약(운동횟수, 총 칼로리) 다시 계산
+            ExerciseCountAndSum summary = exerciseRecordRepository.getDailyExerciseSummary(
+                    userId,
+                    record.getStartAt().toLocalDate().atStartOfDay(),
+                    record.getStartAt().toLocalDate().plusDays(1).atStartOfDay()
+            );
+
+            req.setCount(summary.getCount());
+            req.setTotalKcal(summary.getTotalKcal());
+
+            // 원격 챌린지 서비스에 기록 삭제 요청
+            try {
+                ResponseEntity<Integer> response = challengeFeignClient.deleteRecordByExercise(req);
+                Integer feignResult = response.getBody();
+
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    log.info("챌린지 기록 삭제 성공: userId={}, recordId={}, result={}",
+                            userId, record.getExerciseRecordId(), feignResult);
+                } else {
+                    log.warn("챌린지 기록 삭제 실패: userId={}, recordId={}, status={}",
+                            userId, record.getExerciseRecordId(), response.getStatusCode());
+                }
+            } catch (Exception e) {
+                log.error("챌린지 서비스와 통신 중 오류 발생(삭제 요청): userId={}, recordId={}, error={}",
+                        userId, record.getExerciseRecordId(), e.getMessage(), e);
+            }
+
+        } catch (Exception e) {
+            log.error("운동 기록 삭제 처리 중 오류 발생: userId={}, recordId={}, error={}",
+                    userId, record.getExerciseRecordId(), e.getMessage(), e);
+        }
 //        exerciseRecordRepository.deleteByUserIdAndExerciseRecordId(userId, exerciseRecordId);
     }
 

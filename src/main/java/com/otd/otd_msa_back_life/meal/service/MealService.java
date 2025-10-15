@@ -206,23 +206,40 @@ public class MealService {
 
             if (sumProtein >= 100) {
                 String challengeName = "단백질 섭취";
-                ResponseEntity<List<String>> myChallenges = challengeFeignClient
-                        .getActiveChallengeNames(userId, mealRecordReq.getMealDay());
-                List<String> activeChallenges = myChallenges.getBody();
-                if (activeChallenges != null && !activeChallenges.isEmpty()) {
-                    for (String activeChallenge : activeChallenges) {
-                        if (activeChallenge.equals(challengeName)) {
-                            MealDataReq feign = MealDataReq.builder()
-                                    .userId(userId)
-                                    .recDate(mealRecordReq.getMealDay())
-                                    .today(LocalDate.now())
-                                    .value(sumProtein)
-                                    .name(challengeName)
-                                    .build();
-                            ResponseEntity<Integer> response = challengeFeignClient.updateProgressByMeal(feign);
-                            Integer feignResult = response.getBody();
+                try {
+                    ResponseEntity<List<String>> myChallenges =
+                            challengeFeignClient.getActiveChallengeNames(userId, mealRecordReq.getMealDay());
+                    List<String> activeChallenges = myChallenges.getBody();
+
+                    if (activeChallenges != null && !activeChallenges.isEmpty()) {
+                        for (String activeChallenge : activeChallenges) {
+                            if (activeChallenge.equals(challengeName)) {
+                                MealDataReq feign = MealDataReq.builder()
+                                        .userId(userId)
+                                        .recDate(mealRecordReq.getMealDay())
+                                        .today(LocalDate.now())
+                                        .value(sumProtein)
+                                        .name(challengeName)
+                                        .build();
+
+                                try {
+                                    ResponseEntity<Integer> response =
+                                            challengeFeignClient.updateProgressByMeal(feign);
+                                    Integer feignResult = response.getBody();
+
+                                    if (response.getStatusCode().is2xxSuccessful()) {
+                                        log.info("단백질 섭취 챌린지 진행 상황 업데이트 성공: {}", feignResult);
+                                    } else {
+                                        log.warn("단백질 섭취 챌린지 업데이트 실패: status={}", response.getStatusCode());
+                                    }
+                                } catch (Exception e) {
+                                    log.error("단백질 섭취 챌린지 진행 업데이트 중 예외 발생: {}", e.getMessage(), e);
+                                }
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    log.error("단백질 섭취 챌린지 활성화 여부 조회 중 예외 발생: {}", e.getMessage(), e);
                 }
             }
         }
